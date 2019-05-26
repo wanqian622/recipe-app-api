@@ -9,4 +9,27 @@ services:
     volumes:
       - ./app:/app
     command: >
-      sh -c "python manage.py runserver 0.0.0.0:8000"
+      sh -c "python manage.py wait_for_db &&
+             python manage.py migrate &&
+             python manage.py runserver 0.0.0.0:8000"
+    # set some env var that also depend on DB service
+    environment:
+      - DB_HOST=db
+      - DB_NAME=app
+      - DB_USER=postgres
+      - DB_PASS=supersecretpassword
+    #add depends on setting, when run docker
+    # we could set different services that depend on other services
+    # we want our app service to depend on the db service
+    # the db service wiil start before the app service
+    # the db service will available via the network when use host name db
+    depends_on:
+      - db
+
+  db:
+    image: postgres:10-alpine
+    #set env var for the db name, user name and password when our db service start
+    environment:
+      - POSTGRES_DB=app
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=supersecretpassword
